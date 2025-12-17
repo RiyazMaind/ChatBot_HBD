@@ -1,10 +1,10 @@
 # run_sql.py
 
 import sqlite3
-from text_to_sql import generate_sql_query
+from text_to_sql import generate_sql
 
 def run_query(user_text: str):
-    sql_query = generate_sql_query(user_text)
+    sql_query = generate_sql(user_text)
     print("Generated SQL Query:", sql_query)
 
     conn = sqlite3.connect('businesses.db')
@@ -18,3 +18,7 @@ def run_query(user_text: str):
         print(row)
 
     conn.close()
+
+if __name__ == "__main__":
+    user_input = input("Enter your query: ")
+    run_query(user_input)
