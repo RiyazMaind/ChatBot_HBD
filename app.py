@@ -67,9 +67,23 @@ if not st.session_state.authenticated:
 
     st.stop()
 
+# ---------------- SIDEBAR ---------------- #
+
+with st.sidebar:
+    st.header("🏢 Business Settings")
+
+    if st.button("✏️ Edit / Update My Business"):
+        st.session_state.show_update = True
+
+    if st.button("🔄 Refresh Business Data"):
+        st.session_state.businesses = get_businesses_by_phone(
+            st.session_state.phone
+        )
+        st.success("Business data refreshed")
+
 # ---------------- BUSINESS DASHBOARD ---------------- #
 
-st.subheader("🏢 Your Business(es)")
+st.subheader("🏢 Your Business")
 
 for biz in st.session_state.businesses:
     st.markdown(f"""
@@ -83,33 +97,30 @@ for biz in st.session_state.businesses:
 
 st.divider()
 
-# ---------------- UPDATE BUSINESS BUTTON ---------------- #
-
-if st.button("✏️ Update My Business"):
-    st.session_state.show_update = True
-
 # ---------------- UPDATE PANEL ---------------- #
 
 if st.session_state.show_update:
-    st.subheader("🛠️ Update Your Business Details")
+    st.subheader("🛠️ Edit Business Details")
 
-    # Assuming one business per phone (can be extended later)
+    # Currently assumes 1 business per phone
     business = st.session_state.businesses[0]
-    business_id = business["id"]
+    business_id = business.get("id")
 
-    # ---- Suggestions ----
+    if not business_id:
+        st.error("Business ID not found.")
+        st.stop()
+
+    # ---- Optional Suggestions ----
     suggestions = get_update_suggestions(business)
 
     if suggestions:
-        st.warning("Suggestions to improve your business profile:")
-        for s in suggestions:
-            st.markdown(f"- {s}")
-    else:
-        st.success("Your business profile looks complete 🎉")
+        with st.expander("📌 Suggestions to improve your business (optional)"):
+            for s in suggestions:
+                st.markdown(f"- {s}")
 
     st.divider()
 
-    # ---- Update Form ----
+    # ---- Update Form (Always Editable) ----
     with st.form("update_business_form"):
         name = st.text_input("Business Name", value=business.get("name") or "")
         address = st.text_input("Address", value=business.get("address") or "")
@@ -119,8 +130,11 @@ if st.session_state.show_update:
         subcategory = st.text_input("Subcategory", value=business.get("subcategory") or "")
         area = st.text_input("Area", value=business.get("area") or "")
 
-        save = st.form_submit_button("Save Changes")
-        cancel = st.form_submit_button("Cancel")
+        col1, col2 = st.columns(2)
+        with col1:
+            save = st.form_submit_button("💾 Save Changes")
+        with col2:
+            cancel = st.form_submit_button("❌ Cancel")
 
     if save:
         updates = {
@@ -136,10 +150,12 @@ if st.session_state.show_update:
         update_business(business_id, updates)
 
         st.success("✅ Business details updated successfully")
-        st.session_state.show_update = False
 
-        # Refresh business data
-        st.session_state.businesses = get_businesses_by_phone(st.session_state.phone)
+        # Refresh updated data
+        st.session_state.businesses = get_businesses_by_phone(
+            st.session_state.phone
+        )
+        st.session_state.show_update = False
         st.rerun()
 
     if cancel:
