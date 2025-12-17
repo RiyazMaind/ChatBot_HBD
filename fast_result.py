@@ -1,0 +1,1 @@
+# SQL not detected give results for genral questions
